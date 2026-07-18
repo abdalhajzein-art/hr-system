@@ -1,15 +1,9 @@
-// رابط API الصحيح على سيرفرك الجديد
 const API_URL = "https://excel-warrior-r964t394v-excel-bot.vercel.app/api/chat";
 
-// عناصر الواجهة
 const chatArea = document.getElementById("chatArea");
 const userInput = document.getElementById("userInput");
 const sendBtn = document.getElementById("sendBtn");
 
-// اختبار: هل هذا الملف الجديد يشتغل؟
-addMessage("🔧 ملف app.js الجديد يعمل الآن", "ai");
-
-// إضافة رسالة للواجهة
 function addMessage(text, sender) {
   const msg = document.createElement("div");
   msg.className = `message ${sender}`;
@@ -18,7 +12,6 @@ function addMessage(text, sender) {
   chatArea.scrollTop = chatArea.scrollHeight;
 }
 
-// إرسال الرسالة للذكاء الاصطناعي
 async function sendMessage() {
   const text = userInput.value.trim();
   if (!text) return;
