@@ -6,6 +6,9 @@ const chatArea = document.getElementById("chatArea");
 const userInput = document.getElementById("userInput");
 const sendBtn = document.getElementById("sendBtn");
 
+// اختبار: هل هذا الملف الجديد يشتغل؟
+addMessage("🔧 ملف app.js الجديد يعمل الآن", "ai");
+
 // إضافة رسالة للواجهة
 function addMessage(text, sender) {
   const msg = document.createElement("div");
@@ -20,11 +23,9 @@ async function sendMessage() {
   const text = userInput.value.trim();
   if (!text) return;
 
-  // عرض رسالة المستخدم
   addMessage(text, "user");
   userInput.value = "";
 
-  // إرسال للـ API
   try {
     const res = await fetch(API_URL, {
       method: "POST",
@@ -33,8 +34,6 @@ async function sendMessage() {
     });
 
     const data = await res.json();
-
-    // عرض رد الذكاء
     addMessage(data.reply || "❌ لم يصل رد من الذكاء الاصطناعي.", "ai");
 
   } catch (err) {
@@ -42,10 +41,8 @@ async function sendMessage() {
   }
 }
 
-// زر الإرسال
 sendBtn.onclick = sendMessage;
 
-// إرسال عند الضغط على Enter
 userInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
