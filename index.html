@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8">
-  <title>Excel Warrior – عبر سيرفر Railway</title>
+  <title>Excel Warrior – عبر سيرفر Vercel</title>
   <style>
     body { font-family: sans-serif; direction: rtl; margin: 20px; }
     .box { border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
@@ -14,7 +14,7 @@
 </head>
 <body>
 
-  <h2>Excel Warrior – عبر سيرفر Railway</h2>
+  <h2>Excel Warrior – عبر سيرفر Vercel</h2>
 
   <div class="box">
     <label>اختر ملف Excel:</label><br>
@@ -36,7 +36,7 @@
   </div>
 
   <script>
-    const PROXY_URL = "https://excel-warrior-production-a83a.up.railway.app/process";
+    const PROXY_URL = "https://excel-warrior.vercel.app/api/process";
 
     const fileInput = document.getElementById("fileInput");
     const promptInput = document.getElementById("prompt");
@@ -62,7 +62,7 @@
     }
 
     async function callProxy(csvData, userPrompt) {
-      log("🔹 إرسال البيانات إلى سيرفر Railway...");
+      log("🔹 إرسال البيانات إلى سيرفر Vercel...");
 
       const res = await fetch(PROXY_URL, {
         method: "POST",
