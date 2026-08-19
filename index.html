@@ -1,32 +1,691 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>منصّة الذكاء – دردشة DeepSeek</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>نظام إدارة الموارد البشرية المتكامل</title>
+    
+    <!-- المكتبات الخارجية -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- ربط ملف CSS الخارجي -->
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-  <div class="app-container">
-
-    <!-- شريط علوي -->
-    <header class="top-bar">
-      <div class="title">منصّة الذكاء</div>
-      <div class="subtitle">مدعومة بـ DeepSeek R1</div>
-    </header>
-
-    <!-- منطقة الرسائل -->
-    <main id="chatArea" class="chat-area"></main>
-
-    <!-- صندوق الكتابة -->
-    <div class="input-area">
-      <textarea id="userInput" placeholder="اكتب رسالتك هنا..." rows="1"></textarea>
-      <button id="sendBtn">إرسال</button>
+    <!-- ============================================================
+    شاشة تسجيل الدخول
+    ============================================================ -->
+    <div id="auth-screen">
+        <div class="auth-card">
+            <div class="logo-icon">👑</div>
+            <h2>نظام الموارد البشرية</h2>
+            <p class="subtitle">تسجيل الدخول للمتابعة</p>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>اسم المستخدم</label>
+                    <input type="text" id="login-email" class="form-control" placeholder="admin" value="admin" required>
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" id="login-password" class="form-control" placeholder="••••••" value="admin" required>
+                </div>
+                <button type="submit" class="btn">🚀 تسجيل الدخول</button>
+            </form>
+            <div class="auth-hints">
+                <div style="font-weight:600; color:var(--gold); margin-bottom:0.3rem;">🔑 حسابات تجريبية</div>
+                <div class="hint-row"><span>admin</span> <span class="role-tag">مدير النظام</span></div>
+                <div class="hint-row"><span>hr</span> <span class="role-tag">موارد بشرية</span></div>
+                <div class="hint-row"><span>sup</span> <span class="role-tag">مشرف قسم</span></div>
+                <div class="hint-row"><span>emp</span> <span class="role-tag">موظف</span></div>
+                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.3rem;">* كلمة المرور: admin / 123456</div>
+            </div>
+        </div>
     </div>
 
-  </div>
+    <!-- ============================================================
+    التطبيق الرئيسي
+    ============================================================ -->
+    <div id="app-container">
 
-  <script src="app.js"></script>
+        <!-- الهيدر -->
+        <header>
+            <div class="flex-center">
+                <button class="hamburger" id="hamburger-btn">☰</button>
+                <div class="logo">
+                    <i class="fas fa-crown"></i>
+                    <span class="logo-text" id="company-name">نظام HR</span>
+                </div>
+            </div>
+            <div class="user-info">
+                <div class="user-details">
+                    <span class="username" id="user-display">admin</span>
+                    <span class="role-badge" id="user-role-badge">Admin</span>
+                </div>
+                <div class="avatar" id="user-avatar">أ</div>
+                <button class="btn-logout" id="logout-btn"><i class="fas fa-sign-out-alt"></i> خروج</button>
+            </div>
+        </header>
+
+        <!-- التخطيط الرئيسي -->
+        <div class="main-layout">
+
+            <!-- القائمة الجانبية -->
+            <aside id="sidebar">
+                <div class="nav-section">
+                    <div class="nav-section-title">القائمة الرئيسية</div>
+                    <div class="nav-link active" data-target="dashboard">
+                        <i class="fas fa-chart-pie"></i> لوحة التحكم
+                    </div>
+                    <div class="nav-link" data-target="employees">
+                        <i class="fas fa-users"></i> الموظفين
+                        <span class="badge" id="emp-count-badge">0</span>
+                    </div>
+                    <div class="nav-link" data-target="attendance">
+                        <i class="fas fa-clock"></i> الحضور والانصراف
+                    </div>
+                    <div class="nav-link" data-target="leaves">
+                        <i class="fas fa-calendar-alt"></i> الإجازات
+                        <span class="badge" id="leave-pending-badge">0</span>
+                    </div>
+                    <div class="nav-link" data-target="payroll">
+                        <i class="fas fa-money-bill-wave"></i> الرواتب
+                    </div>
+                    <div class="nav-link admin-only" data-target="users">
+                        <i class="fas fa-user-shield"></i> المستخدمون
+                    </div>
+                    <div class="nav-link admin-only" data-target="audit">
+                        <i class="fas fa-history"></i> سجل التدقيق
+                    </div>
+                    <div class="nav-link admin-hr-only" data-target="settings">
+                        <i class="fas fa-cogs"></i> الإعدادات
+                    </div>
+                </div>
+            </aside>
+
+            <!-- المحتوى -->
+            <main>
+
+                <!-- ============================================================
+                لوحة التحكم (Dashboard)
+                ============================================================ -->
+                <div id="dashboard" class="tab-content active">
+                    <div class="card">
+                        <h2 class="card-title">📊 مرحباً بك في نظام إدارة الموارد البشرية</h2>
+                        <p class="text-muted mt-1">نظرة عامة على أداء الموارد البشرية في مؤسستك</p>
+                    </div>
+
+                    <div class="kpi-grid" id="dashboard-kpis">
+                        <div class="kpi-card">
+                            <div class="icon"><i class="fas fa-users"></i></div>
+                            <div class="info">
+                                <h4>إجمالي الموظفين</h4>
+                                <div class="value" id="kpi-total-emp">0</div>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="icon"><i class="fas fa-user-check"></i></div>
+                            <div class="info">
+                                <h4>النشطون</h4>
+                                <div class="value" id="kpi-active-emp">0</div>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="icon"><i class="fas fa-clock"></i></div>
+                            <div class="info">
+                                <h4>حضور اليوم</h4>
+                                <div class="value" id="kpi-today-attendance">0</div>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="icon"><i class="fas fa-calendar-check"></i></div>
+                            <div class="info">
+                                <h4>إجازات معلقة</h4>
+                                <div class="value" id="kpi-pending-leaves">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title"><i class="fas fa-bolt"></i> الإجراءات السريعة</span>
+                        </div>
+                        <div class="btn-group" style="gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn btn-primary" onclick="openModal('employee-modal')"><i class="fas fa-user-plus"></i> إضافة موظف</button>
+                            <button class="btn btn-secondary" onclick="openModal('leave-modal')"><i class="fas fa-calendar-plus"></i> طلب إجازة</button>
+                            <button class="btn btn-secondary" onclick="generatePayroll()"><i class="fas fa-calculator"></i> توليد الرواتب</button>
+                            <button class="btn btn-secondary" onclick="document.getElementById('excel-upload').click()"><i class="fas fa-file-excel"></i> استيراد Excel</button>
+                            <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none" onchange="importExcel(event)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================
+                الموظفين (Employees)
+                ============================================================ -->
+                <div id="employees" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title"><i class="fas fa-users"></i> إدارة الموظفين</span>
+                            <div class="btn-group">
+                                <button class="btn btn-primary" onclick="openModal('employee-modal')"><i class="fas fa-plus"></i> إضافة</button>
+                                <button class="btn btn-secondary" onclick="exportEmployeesPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
+                                <button class="btn btn-secondary" onclick="exportEmployeesCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+                            </div>
+                        </div>
+
+                        <div class="controls-bar">
+                            <input type="text" id="emp-search" class="form-control search-box" placeholder="🔍 بحث بالاسم أو البريد...">
+                            <select id="emp-filter-dept" class="form-control filter-box">
+                                <option value="">جميع الأقسام</option>
+                            </select>
+                            <select id="emp-filter-status" class="form-control filter-box">
+                                <option value="">جميع الحالات</option>
+                                <option value="نشط">نشط</option>
+                                <option value="في إجازة">في إجازة</option>
+                                <option value="منتهي الخدمة">منتهي الخدمة</option>
+                            </select>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>الاسم</th>
+                                        <th>البريد</th>
+                                        <th>القسم</th>
+                                        <th>المسمى</th>
+                                        <th>الراتب</th>
+                                        <th>رصيد الإجازات</th>
+                                        <th>الحالة</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employees-tbody"></tbody>
+                            </table>
+                        </div>
+                        <div class="pagination" id="employees-pagination"></div>
+                    </div>
+                </div>
+
+                <!-- ============================================================
+                الحضور والانصراف (Attendance) - مع تحكم كامل للمدير
+                ============================================================ -->
+                <div id="attendance" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title"><i class="fas fa-clock"></i> تسجيل الحضور والانصراف</span>
+                            <div class="btn-group">
+                                <button class="btn btn-primary" onclick="recordMyAttendance('in')"><i class="fas fa-sign-in-alt"></i> دخول</button>
+                                <button class="btn btn-danger" onclick="recordMyAttendance('out')"><i class="fas fa-sign-out-alt"></i> انصراف</button>
+                                <button class="btn btn-info admin-only" onclick="openModal('attendance-modal')"><i class="fas fa-user-edit"></i> تسجيل لموظف</button>
+                            </div>
+                        </div>
+
+                        <div class="controls-bar">
+                            <input type="date" id="att-filter-date" class="form-control filter-box">
+                            <select id="att-filter-status" class="form-control filter-box">
+                                <option value="">جميع الحالات</option>
+                                <option value="حاضر">حاضر</option>
+                                <option value="متأخر">متأخر</option>
+                                <option value="غائب">غائب</option>
+                                <option value="إجازة">إجازة</option>
+                            </select>
+                            <select id="att-filter-emp" class="form-control filter-box admin-only">
+                                <option value="">جميع الموظفين</option>
+                            </select>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>الموظف</th>
+                                        <th>التاريخ</th>
+                                        <th>الدخول</th>
+                                        <th>الانصراف</th>
+                                        <th>الساعات</th>
+                                        <th>الحالة</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendance-tbody"></tbody>
+                            </table>
+                        </div>
+                        <div class="pagination" id="attendance-pagination"></div>
+                    </div>
+                </div>
+
+                <!-- ============================================================
+                الإجازات (Leaves)
+                ============================================================ -->
+                <div id="leaves" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title"><i class="fas fa-calendar-alt"></i> طلبات الإجازات</span>
+                            <button class="btn btn-primary" onclick="openModal('leave-modal')"><i class="fas fa-plus"></i> طلب جديد</button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>الموظف</th>
+                                        <th>نوع الإجازة</th>
+                                        <th>من تاريخ</th>
+                                        <th>إلى تاريخ</th>
+                                        <th>الأيام</th>
+                                        <th>الحالة</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaves-tbody"></tbody>
+                            </table>
+                        </div>
+                        <div class="pagination" id="leaves-pagination"></div>
+                    </div>
+                </div>
+
+                <!-- ============================================================
+                الرواتب (Payroll)
+                ============================================================ -->
+                <div id="payroll" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title"><i class="fas fa-money-bill-wave"></i> مسير الرواتب</span>
+                            <div class="btn-group">
+                                <button class="btn btn-primary" onclick="generatePayroll()"><i class="fas fa-calculator"></i> توليد</button>
+                                <button class="btn btn-secondary" onclick="exportPayrollPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
+                            </div>
+                        </div>
+
+                        <div class="controls-bar">
+                            <input type="month" id="payroll-month" class="form-control filter-box">
+                            <span class="text-muted" style="font-size: var(--font-sm);">أيام العمل: <strong id="payroll-work-days">0</strong></span>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>الموظف</th>
+                                        <th>الأساسي</th>
+                                        <th>الغياب</th>
+                                        <th>الخصم</th>
+                                        <th>المكافأة</th>
+                                        <th>الصافي</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="payroll-tbody"></tbody>
+                            </table>
+                        </div>
+                        <div class="pagination" id="payroll-pagination"></div>
+                    </div>
+                </div>
+
+                <!-- ============================================================
+                المستخدمون (Users) - Admin Only
+                ============================================================ -->
+                <div id="users" class="tab-content admin-only-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title"><i class="fas fa-user-shield"></i> إدارة المستخدمين</span>
+                            <button class="btn btn-primary" onclick="openModal('user-modal')"><i class="fas fa-user-plus"></i> مستخدم جديد</button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>اسم المستخدم</th>
+                                        <th>الدور</th>
+                                        <th>الموظف</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================
+                سجل التدقيق (Audit) - Admin Only
+                ============================================================ -->
+                <div id="audit" class="tab-content admin-only-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title"><i class="fas fa-history"></i> سجل التدقيق</span>
+                            <button class="btn btn-secondary" onclick="exportAuditPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>المستخدم</th>
+                                        <th>العملية</th>
+                                        <th>التفاصيل</th>
+                                        <th>التاريخ والوقت</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="audit-tbody"></tbody>
+                            </table>
+                        </div>
+                        <div class="pagination" id="audit-pagination"></div>
+                    </div>
+                </div>
+
+                <!-- ============================================================
+                الإعدادات (Settings) - Admin / HR
+                ============================================================ -->
+                <div id="settings" class="tab-content admin-hr-only-tab">
+                    <div class="card">
+                        <h2 class="card-title"><i class="fas fa-cogs"></i> إعدادات النظام</h2>
+
+                        <form id="settings-form" style="margin-top: 1.5rem;">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>اسم الشركة</label>
+                                    <input type="text" id="setting-company" class="form-control" placeholder="شركة الأثير">
+                                </div>
+                                <div class="form-group">
+                                    <label>العملة</label>
+                                    <input type="text" id="setting-currency" class="form-control" placeholder="SAR" value="SAR">
+                                </div>
+                                <div class="form-group">
+                                    <label>تنسيق التاريخ</label>
+                                    <select id="setting-date-format" class="form-control">
+                                        <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                        <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                        <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>رصيد الإجازات الافتراضي</label>
+                                    <input type="number" id="setting-leave-balance" class="form-control" value="21" min="0">
+                                </div>
+                                <div class="form-group full">
+                                    <label>أيام الدوام الرسمية</label>
+                                    <div id="work-days-checkboxes" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr style="border-color: var(--border); margin: 1.5rem 0;">
+
+                            <h4 style="color: var(--gold); margin-bottom: 1rem;">إدارة القوائم المنسدلة</h4>
+
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>الأقسام</label>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <input type="text" id="new-dept-input" class="form-control" placeholder="اسم القسم">
+                                        <button type="button" class="btn btn-primary" id="add-dept-btn" style="width: auto; padding: 0.7rem 1rem;">إضافة</button>
+                                    </div>
+                                    <div class="tags-container" id="dept-tags"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label>المسميات الوظيفية</label>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <input type="text" id="new-job-input" class="form-control" placeholder="المسمى">
+                                        <button type="button" class="btn btn-primary" id="add-job-btn" style="width: auto; padding: 0.7rem 1rem;">إضافة</button>
+                                    </div>
+                                    <div class="tags-container" id="job-tags"></div>
+                                </div>
+                                <div class="form-group full">
+                                    <label>أنواع الإجازات</label>
+                                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                        <input type="text" id="new-leave-input" class="form-control" placeholder="نوع الإجازة" style="flex:1; min-width:150px;">
+                                        <select id="new-leave-deduct" class="form-control" style="width: auto;">
+                                            <option value="true">يخصم من الرصيد</option>
+                                            <option value="false">لا يخصم</option>
+                                        </select>
+                                        <button type="button" class="btn btn-primary" id="add-leave-btn" style="width: auto; padding: 0.7rem 1rem;">إضافة</button>
+                                    </div>
+                                    <div class="tags-container" id="leave-tags"></div>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> حفظ الإعدادات</button>
+                                <button type="button" class="btn btn-secondary" onclick="resetSettings()"><i class="fas fa-undo"></i> استعادة الافتراضي</button>
+                                <button type="button" class="btn btn-secondary" onclick="exportBackup()"><i class="fas fa-download"></i> نسخ احتياطي</button>
+                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('import-backup').click()"><i class="fas fa-upload"></i> استيراد</button>
+                                <input type="file" id="import-backup" accept=".json" style="display:none" onchange="importBackup(event)">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    المودالات (Modals)
+    ============================================================ -->
+
+    <!-- مودال الموظف -->
+    <div id="employee-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="emp-modal-title">إضافة موظف جديد</h3>
+                <button class="modal-close" onclick="closeModal('employee-modal')">&times;</button>
+            </div>
+            <form id="employee-form">
+                <input type="hidden" id="emp-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>الاسم الكامل *</label>
+                        <input type="text" id="emp-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>البريد الإلكتروني *</label>
+                        <input type="email" id="emp-email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>القسم *</label>
+                        <select id="emp-dept" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>المسمى الوظيفي *</label>
+                        <select id="emp-job" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>الراتب الأساسي *</label>
+                        <input type="number" id="emp-salary" class="form-control" required min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>رصيد الإجازات</label>
+                        <input type="number" id="emp-leave-balance" class="form-control" value="21" min="0">
+                    </div>
+                    <div class="form-group full">
+                        <label>الحالة</label>
+                        <select id="emp-status" class="form-control">
+                            <option value="نشط">نشط</option>
+                            <option value="في إجازة">في إجازة</option>
+                            <option value="منتهي الخدمة">منتهي الخدمة</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('employee-modal')">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال الإجازة -->
+    <div id="leave-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>طلب إجازة جديدة</h3>
+                <button class="modal-close" onclick="closeModal('leave-modal')">&times;</button>
+            </div>
+            <form id="leave-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>الموظف *</label>
+                        <select id="leave-emp" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>نوع الإجازة *</label>
+                        <select id="leave-type" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>من تاريخ *</label>
+                        <input type="date" id="leave-start" class="form-control" required onchange="calcLeaveDays()">
+                    </div>
+                    <div class="form-group">
+                        <label>إلى تاريخ *</label>
+                        <input type="date" id="leave-end" class="form-control" required onchange="calcLeaveDays()">
+                    </div>
+                    <div class="form-group full">
+                        <label>عدد الأيام الفعلي</label>
+                        <input type="text" id="leave-days" class="form-control" readonly style="background: var(--bg-input);">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('leave-modal')">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">إرسال الطلب</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال المستخدم -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="user-modal-title">إدارة المستخدم</h3>
+                <button class="modal-close" onclick="closeModal('user-modal')">&times;</button>
+            </div>
+            <form id="user-form">
+                <input type="hidden" id="user-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>اسم المستخدم *</label>
+                        <input type="text" id="user-username" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>كلمة المرور</label>
+                        <input type="password" id="user-password" class="form-control" placeholder="اتركه فارغاً للاحتفاظ بالقديمة">
+                    </div>
+                    <div class="form-group">
+                        <label>الدور *</label>
+                        <select id="user-role" class="form-control" required>
+                            <option value="Admin">مدير (Admin)</option>
+                            <option value="HR">موارد بشرية (HR)</option>
+                            <option value="Supervisor">مشرف قسم</option>
+                            <option value="Employee">موظف</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>ربط بموظف</label>
+                        <select id="user-emp-link" class="form-control">
+                            <option value="">-- بدون --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('user-modal')">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال الحضور (للمدير) -->
+    <div id="attendance-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>تسجيل حضور وانصراف لموظف</h3>
+                <button class="modal-close" onclick="closeModal('attendance-modal')">&times;</button>
+            </div>
+            <form id="attendance-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>الموظف *</label>
+                        <select id="att-emp-select" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>التاريخ *</label>
+                        <input type="date" id="att-emp-date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>وقت الدخول</label>
+                        <input type="time" id="att-emp-in" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>وقت الانصراف</label>
+                        <input type="time" id="att-emp-out" class="form-control">
+                    </div>
+                    <div class="form-group full">
+                        <label>الحالة</label>
+                        <select id="att-emp-status" class="form-control">
+                            <option value="حاضر">حاضر</option>
+                            <option value="متأخر">متأخر</option>
+                            <option value="غائب">غائب</option>
+                            <option value="إجازة">إجازة</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('attendance-modal')">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">تسجيل</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال تعديل الراتب -->
+    <div id="payroll-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>تعديل الراتب</h3>
+                <button class="modal-close" onclick="closeModal('payroll-modal')">&times;</button>
+            </div>
+            <form id="payroll-form">
+                <input type="hidden" id="payroll-emp-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>أيام الغياب</label>
+                        <input type="number" id="payroll-absence" class="form-control" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>المكافآت</label>
+                        <input type="number" id="payroll-bonus" class="form-control" min="0" value="0" step="0.01">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('payroll-modal')">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- قسيمة الراتب للطباعة -->
+    <div id="payslip-print">
+        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px;">
+            <h1 id="print-company">شركة الأثير</h1>
+            <h2>قسيمة راتب</h2>
+        </div>
+        <div id="payslip-content"></div>
+    </div>
+
+    <!-- حاوية الإشعارات -->
+    <div id="toast-container"></div>
+
+    <!-- ============================================================
+    ربط ملف JavaScript الخارجي (في الآخر)
+    ============================================================ -->
+    <script src="script.js"></script>
+
 </body>
-</html>
+  </html>
